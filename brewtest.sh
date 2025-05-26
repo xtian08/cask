@@ -32,5 +32,5 @@ unset HOMEBREW_NO_SANDBOX
 #App path
 brew_prefix=$([[ "$(uname -m)" == "arm64" ]] && echo "/opt/homebrew" || echo "/usr/local")
 echo >> /Users/$mUSER/.zprofile
-echo 'eval "$($brew_prefix/bin/brew shellenv)"' >> /Users/$mUSER/.zprofile
-eval "$($brew_prefix/bin/brew shellenv)"
+echo "eval \"\$(${brew_prefix}/bin/brew shellenv)\"" >> /Users/$mUSER/.zprofile
+eval "$(${brew_prefix}/bin/brew shellenv)"
