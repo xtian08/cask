@@ -29,6 +29,7 @@ rm -f /tmp/sap.sh
 unset SUDO_ASKPASS
 unset HOMEBREW_NO_SANDBOX
 
-#echo >> /Users/$mUSER/.zprofile
-#echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> /Users/$mUSER/.zprofile
-#eval "$(/opt/homebrew/bin/brew shellenv)"
+#App path
+brew_prefix=$([[ "$(uname -m)" == "arm64" ]] && echo "/opt/homebrew" || echo "/usr/local")
+echo -e "\neval \"\$($brew_prefix/bin/brew shellenv)\"" >> /Users/$mUSER/.zprofile
+eval "$($brew_prefix/bin/brew shellenv)"
