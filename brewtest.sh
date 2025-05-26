@@ -29,6 +29,6 @@ rm -f /tmp/sap.sh
 unset SUDO_ASKPASS
 unset HOMEBREW_NO_SANDBOX
 
-echo >> /Users/$mUSER/.zprofile
-echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> /Users/$mUSER/.zprofile
-eval "$(/opt/homebrew/bin/brew shellenv)"
+#echo >> /Users/$mUSER/.zprofile
+#echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> /Users/$mUSER/.zprofile
+#eval "$(/opt/homebrew/bin/brew shellenv)"
