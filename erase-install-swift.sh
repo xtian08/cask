@@ -2294,14 +2294,14 @@ set_localisations() {
     dialog_erase_credentials=dialog_erase_credentials_${user_language}
 
     # Dialogue localizations - ask for credentials - reinstall
-    dialog_reinstall_credentials_en="Upgrading macOS requires authentication using local account credentials.  \n\nPlease enter your account name and password to start the upgrade process."
-    dialog_reinstall_credentials_de="Das Upgrade von macOS erfordert eine Authentifizierung mit den Anmeldedaten des lokalen Kontos.  \n\nBitte geben Sie Ihren Kontonamen und Ihr Passwort ein, um den Upgrade-Prozess zu starten."
-    dialog_reinstall_credentials_nl="Voor het upgraden van macOS is verificatie met behulp van lokale accountgegevens vereist.  \n\nVoer uw accountnaam en wachtwoord in om het upgradeproces te starten."
-    dialog_reinstall_credentials_fr="La mise à niveau de macOS nécessite une authentification à l'aide des informations d'identification du compte local.  \n\nVeuillez saisir votre nom de compte et votre mot de passe pour lancer le processus de mise à niveau."
-    dialog_reinstall_credentials_es="La actualización de macOS requiere la autenticación mediante las credenciales de la cuenta de usuario local.  \n\nIntroduce el nombre de tu usuario y la contraseña para iniciar el proceso de actualización."
-    dialog_reinstall_credentials_pt="A atualização do macOS requer autenticação usando credenciais de conta local. \n\nDigite seu nome de conta e senha para iniciar o processo de atualização."
-    dialog_reinstall_credentials_ja="macOS をアップグレードするには、ローカルアカウントの資格情報による認証が必要です。  \n\nアカウント名とパスワードを入力してアップグレードを開始してください。"
-    dialog_reinstall_credentials_ua="Оновлення macOS вимагає автентифікації за допомогою локальних облікових даних.  \n\nБудь ласка, введіть ім'я та пароль вашого облікового запису, щоб розпочати процес оновлення."
+    dialog_reinstall_credentials_en="Upgrading macOS requires authentication using local account credentials.  \n\nClick password box and enter password to start the upgrade process. \n\nNote: Not the NetID credentials"
+    dialog_reinstall_credentials_de="Für ein Upgrade von macOS ist eine Authentifizierung mit den Anmeldedaten des lokalen Kontos erforderlich.  \n\nKlicken Sie auf das Passwortfeld und geben Sie das Passwort ein, um den Upgrade-Vorgang zu starten. \n\nHinweis: Nicht die NetID-Anmeldedaten"
+    dialog_reinstall_credentials_nl="Voor het upgraden van macOS is authenticatie met lokale accountgegevens vereist.  \n\nKlik op het wachtwoordveld en voer het wachtwoord in om het upgradeproces te starten. \n\nOpmerking: Niet de NetID-referenties"
+    dialog_reinstall_credentials_fr="La mise à niveau de macOS nécessite une authentification avec les identifiants du compte local.  \n\nCliquez sur le champ de mot de passe et saisissez le mot de passe pour lancer le processus de mise à niveau. \n\nRemarque : Pas les identifiants NetID"
+    dialog_reinstall_credentials_es="La actualización de macOS requiere autenticación mediante las credenciales de la cuenta local.  \n\nHaga clic en el campo de contraseña e ingrese la contraseña para iniciar el proceso de actualización. \n\nNota: No las credenciales de NetID"
+    dialog_reinstall_credentials_pt="A atualização do macOS requer autenticação usando as credenciais da conta local.  \n\nClique no campo de senha e insira a senha para iniciar o processo de atualização. \n\nObservação: Não as credenciais do NetID"
+    dialog_reinstall_credentials_ja="macOSのアップグレードには、ローカルアカウントの認証情報を使用した認証が必要です。  \n\nパスワードボックスをクリックし、パスワードを入力してアップグレードプロセスを開始します。 \n\n注：NetIDの認証情報ではありません"
+    dialog_reinstall_credentials_ua="Оновлення macOS вимагає автентифікації за допомогою локальних облікових даних.  \n\nНатисніть поле для пароля та введіть пароль, щоб розпочати процес оновлення. \n\nПримітка: Не облікові дані NetID"
     dialog_reinstall_credentials=dialog_reinstall_credentials_${user_language}
 
     # Dialogue localizations - not a volume owner
