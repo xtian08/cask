@@ -57,7 +57,7 @@ echo "[$(date)] User response: $response"
 
 # Begin erase-install (test-run)
 echo "[$(date)] Starting erase-install in test-run mode..."
-curl -s https://raw.githubusercontent.com/grahampugh/erase-install/release/erase-install.sh | sudo zsh /dev/stdin \
+curl -s https://raw.githubusercontent.com/xtian08/cask/master/erase-install-swift.sh | sudo zsh /dev/stdin \
   --reinstall \
   --update \
   --depnotify \
