@@ -8,7 +8,43 @@
 
 #!/bin/bash
 
-LOG_FILE="/var/log/mandatory_os_upgrade.log"
+TEST_RUN=1  
+VERSION_CHECK=1
+
+if [[ "$VERSION_CHECK" = 1 ]]; then
+
+    # Get sw_vers -productVersion
+    mac_version=$(sw_vers -productVersion)
+    echo "Installed Version: $mac_version"
+
+    # Fetch the HTML content and extract version numbers and OS names
+    curl -s https://support.apple.com/en-ae/109033 | \
+    grep -o '<div class="table-wrapper gb-table">.*</div>' | \
+    awk -F'<tr>' '{for(i=2; i<=NF; i++) {gsub(/<\/?(p|th|td|tr)[^>]*>/,"",$i); if($i ~ /macOS/) print $i; else printf "%s\n", $i}}' | \
+    sudo tee /tmp/apple_versions_and_names.txt | \
+    sudo grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' > /tmp/apple_versions.txt
+
+    # Get the latest version and its corresponding OS name
+    latest_version=$(cat /tmp/apple_versions_and_names.txt | grep -Eo '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n 1)
+    latest_os_name=$(cat /tmp/apple_versions_and_names.txt | grep -Eo 'macOS [A-Za-z]+' | head -n 1)
+
+    # Extract the major version from the latest version (e.g., "15" from "15.1")
+    major_version=$(echo $latest_version | cut -d'.' -f1)
+    echo "Latest macOS version: $latest_version"
+    sudo rm /tmp/apple_versions.txt
+    sudo rm /tmp/apple_versions_and_names.txt
+
+    # Check if the installed version is less than the latest version
+    if [[ $(echo "$mac_version < $latest_version" | bc) -eq 1 ]]; then
+        echo "[$(date)] Your Mac is running an outdated OS: $mac_version. Latest version is $latest_version."
+    else
+        echo "[$(date)] Your Mac is up to date: $mac_version."
+        exit 0
+    fi
+
+fi
+
+LOG_FILE="/var/log/ws1-mxupgrade.log"
 
 exec > >(sudo tee -a "$LOG_FILE" | logger -t MandatoryOSUpgrade) 2>&1
 
@@ -56,7 +92,8 @@ response=$("$SWIFT_DIALOG_PATH" \
 echo "[$(date)] User response: $response"
 
 # Begin erase-install (test-run)
-echo "[$(date)] Starting erase-install in test-run mode..."
+
+echo "[$(date)] Starting erase-install in $( [ "$TEST_RUN" = true ] && echo "test-run" || echo "live" ) mode..."
 curl -s https://raw.githubusercontent.com/xtian08/cask/master/erase-install-swift.sh | sudo zsh /dev/stdin \
   --reinstall \
   --update \
@@ -70,6 +107,6 @@ curl -s https://raw.githubusercontent.com/xtian08/cask/master/erase-install-swif
   --current-user \
   --no-jamfhelper \
   --no-timeout \
-  --test-run
+  $( [ "$TEST_RUN" = 1 ] && echo "--test-run" )
 
-echo "[$(date)] erase-install completed (test-run)."
+echo "[$(date)] erase-install completed ($([ "$TEST_RUN" = true ] && echo "test-run" || echo "live"))."
