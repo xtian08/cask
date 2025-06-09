@@ -94,7 +94,7 @@ echo "[$(date)] User response: $response"
 # Begin erase-install (test-run)
 
 echo "[$(date)] Starting erase-install in $( [ "$TEST_RUN" = true ] && echo "test-run" || echo "live" ) mode..."
-curl -s https://raw.githubusercontent.com/xtian08/cask/master/erase-install-swift.sh | sudo zsh /dev/stdin \
+curl -s https://raw.githubusercontent.com/xtian08/cask/master/erase-install-swift.sh | sudo bash \
   --reinstall \
   --update \
   --depnotify \
