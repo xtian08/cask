@@ -35,7 +35,12 @@ if [[ "$VERSION_CHECK" = 1 ]]; then
     sudo rm /tmp/apple_versions_and_names.txt
 
     # Check if the installed version is less than the latest version
-    if [[ $(echo "$mac_version < $latest_version" | bc) -eq 1 ]]; then
+    ver_lt() {
+        # Returns 0 (true) if $1 < $2
+        [ "$(printf '%s\n' "$1" "$2" | sort -V | head -n1)" != "$2" ]
+    }
+    
+    if ver_lt "$mac_version" "$latest_version"; then
         echo "[$(date)] Your Mac is running an outdated OS: $mac_version. Latest version is $latest_version."
     else
         echo "[$(date)] Your Mac is up to date: $mac_version."
@@ -94,7 +99,7 @@ echo "[$(date)] User response: $response"
 # Begin erase-install (test-run)
 
 echo "[$(date)] Starting erase-install in $( [ "$TEST_RUN" = true ] && echo "test-run" || echo "live" ) mode..."
-curl -s https://raw.githubusercontent.com/xtian08/cask/master/erase-install-swift.sh | sudo bash \
+curl -s https://raw.githubusercontent.com/xtian08/cask/master/erase-install-swift.sh | sudo zsh /dev/stdin \
   --reinstall \
   --update \
   --depnotify \
