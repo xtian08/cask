@@ -2206,14 +2206,15 @@ set_localisations() {
     dialog_reinstall_confirmation_desc=dialog_reinstall_confirmation_desc_${user_language}
 
     # Dialogue localizations - free space check - description
-    dialog_check_desc_en="The macOS upgrade cannot be installed as there is not enough space left on the drive."
-    dialog_check_desc_de="macOS kann nicht aktualisiert werden, da nicht genügend Speicherplatz auf dem Laufwerk frei ist."
-    dialog_check_desc_nl="De upgrade van macOS kan niet worden geïnstalleerd omdat er niet genoeg ruimte is op de schijf."
-    dialog_check_desc_fr="La mise à niveau de macOS ne peut pas être installée car il n'y a pas assez d'espace disponible sur ce volume."
-    dialog_check_desc_es="La actualización de macOS no se puede instalar porque no queda espacio suficiente en la unidad."
-    dialog_check_desc_pt="A atualização do macOS não pode ser instalada porque não há espaço suficiente na unidade."
-    dialog_check_desc_ja="ドライブに十分な空き領域がないため、macOS アップグレードをインストールできません。"
-    dialog_check_desc_ua="Оновлення macOS не вдається встановити, оскільки на диску залишилось недостатньо місця."
+    required_space="35GB"
+    dialog_check_desc_en="The macOS upgrade cannot be installed as there is not enough space left on the drive. Please free up $required_space of disk space."
+    dialog_check_desc_de="Die macOS-Aktualisierung kann nicht installiert werden, da nicht genügend Speicherplatz auf dem Laufwerk verfügbar ist. Bitte $required_space freigeben."
+    dialog_check_desc_nl="De macOS-upgrade kan niet worden geïnstalleerd omdat er niet genoeg ruimte is op de schijf. Maak $required_space vrije ruimte vrij."
+    dialog_check_desc_fr="La mise à niveau de macOS ne peut pas être installée car l'espace disponible sur le disque est insuffisant. Veuillez libérer $required_space d'espace disque."
+    dialog_check_desc_es="La actualización de macOS no se puede instalar porque no hay suficiente espacio en la unidad. Libere $required_space de espacio en el disco."
+    dialog_check_desc_pt="A atualização do macOS não pode ser instalada porque não há espaço suficiente na unidade. Libere $required_space de espaço em disco."
+    dialog_check_desc_ja="ドライブの空き容量が不足しているため、macOSのアップグレードをインストールできません。$required_spaceのディスク空き領域を確保してください。"
+    dialog_check_desc_ua="Оновлення macOS не вдається встановити через недостатньо місця на диску. Звільніть $required_space дискового простору."
     dialog_check_desc=dialog_check_desc_${user_language}
 
     # Dialogue localizations - power check - title
