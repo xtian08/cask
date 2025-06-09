@@ -42,8 +42,8 @@ echo "[$(date)] Logged in user: $logged_in_user, Full name: $full_name"
 
 # Display dialog
 response=$("$SWIFT_DIALOG_PATH" \
-    --title "Required Action: MacOS Upgrade" \
-    --message "Dear $full_name\n\nThis machine is identified to having old OS\n\nKindly input mac password on the next window to prepare the upgrader\n\nYou'll be prompted to save your work before the upgrade proper.\n\nFor failed upgrade please send us email with the screenshot or any othe concern contact us email:nyuad.it@nyu.edu or Campus Line: x88888" \
+    --title "MacOS Upgrade Upgrade Required" \
+    --message "Dear $full_name\n\nYour Mac is running an outdated OS.\n\nTo upgrade: Click on **Proceed**.\n\n☞ Enter your Mac Password when prompted.\n\n☞ Save your work before the update starts.\n\n**Need Help?** Email us email:nyuad.it@nyu.edu or Campus Line: x88888" \
     --icon caution \
     --overlayicon https://raw.githubusercontent.com/xtian08/cask/refs/heads/main/NYUADLogobox.png \
     --iconsize 300 \
