@@ -8,7 +8,7 @@
 
 #!/bin/bash
 
-TEST_RUN=1  
+TEST_RUN=0
 VERSION_CHECK=1
 
 if [[ "$VERSION_CHECK" = 1 ]]; then
