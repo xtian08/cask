@@ -12,26 +12,28 @@
 start_date_file="/Users/shared/muufile.txt"
 defer_days="5"
 delay_days=0
-CNlist=("name1" "ADUAEI15736LPMX" "xTianm4mAx") #Excluded for major
+CNlist=("name1" "ADUAEI15736LPMX" "xTianm4mAx1") #Excluded for major
+ARCH=$(uname -m)
 
 #Simulate other version
-SIMS=1
+SIMS=0
 
 if [[ "$SIMS" = 1 ]]; then
     echo "####################################################################"
     echo "####################### Simulating is ACTIVE #######################"    #Simulation Variables
     echo "####################################################################"
-    SIMS_mac_version="15" #local installed version
-    SIMS_os_list="15.4.1\n15.4\n15.3.2\n15.3.1\n12.7.6" #Available versions
-    SIMS_os_list="13.0"
+    SIMS_mac_version="13.16.1" #local installed version
+    SIMS_os_list="15.5\n15.4.1\n15.4\n15.3.2\n15.3.1\n12.7.6" #Available versions
+    SIMS_os_list="13.20"
     SIMS_major_version="15" #cloud major version
+    ddb="yes" #Release date is more than delay days ago
+    #ARCH="x86_64" #Architecture
 fi
 
 echo "*************Checking MacOS SU*************"
-echo "Performing Software Update Check for macOS"
 
 echo "####################################################################"
-echo $(date)
+echo $(date) + "Performing Software Update Check for macOS"
 echo "####################################################################"
 
 # Function to get all active network services
@@ -69,12 +71,11 @@ fi
 CURRENT_DNS=$(networksetup -getdnsservers "$ACTIVE_SERVICE" 2>/dev/null)
 
 # Echo the current DNS
-echo "Active network service: $ACTIVE_SERVICE"
-echo "Current DNS for '$ACTIVE_SERVICE':"
+echo "Active net: $ACTIVE_SERVICE"
 if [[ "$CURRENT_DNS" == "There aren't any DNS Servers set on"* ]]; then
-    echo "No DNS servers are set."
+    echo "With DNS: NONE"
 else
-    echo "$CURRENT_DNS"
+    echo "With DNS: $CURRENT_DNS"
 fi
 
 check_dns() {
@@ -117,8 +118,6 @@ if [[ "$SIMS" = 0 ]]; then
     Current_FullOS="$latest_os_name $latest_version"
     echo "~~~~~~"
 
-    # Base OS version check
-    echo "Latest macOS Base version: $Current_BaseOS"
     # Fetch the HTML content from the target page
     secURL="https://support.apple.com"
     html_content=$(curl -s $secURL/en-ae/100100)
@@ -131,7 +130,7 @@ if [[ "$SIMS" = 0 ]]; then
 
     # Fetch the release date from the FullOSurl page using sed
     release_date=$(curl -s $FullOSurl | sed -n 's/.*<div class="note gb-note"><p class="gb-paragraph">Released \([^<]*\)<\/p><\/div>.*/\1/p')
-    echo "Release Date of Base OS: $release_date"
+
     # Convert the release date to Unix timestamp
     release_timestamp=$(date -j -f "%B %d, %Y" "$release_date" +%s)
 
@@ -140,13 +139,10 @@ if [[ "$SIMS" = 0 ]]; then
 
     # Calculate the difference in days
     days_diff=$(( (current_timestamp - release_timestamp) / 86400 ))
-    echo "$days_diff days since release date"
-    if [ $days_diff -gt $delay_days ]; then ddb="Yes"; else ddb="NO"; fi
-    echo "Is the release date more than $delay_days days? $ddb"
-    echo "~~~~~~"
+    echo "$Current_BaseOS released on $release_date and its been $days_diff days"
+    if [ $days_diff -gt $delay_days ]; then ddb="yes"; else ddb="no"; fi
+    #echo "Is the release date more than $delay_days days? $ddb"
 
-    # Full OS version check
-    echo "Latest macOS Full version: $Current_FullOS"
     # Fetch the HTML content from the target page
     secURL="https://support.apple.com"
     html_content=$(curl -s $secURL/en-ae/100100)
@@ -154,9 +150,9 @@ if [[ "$SIMS" = 0 ]]; then
     grep -o "<a href=\"[^\"]*\" class=\"gb-anchor\">$Current_FullOS</a>" | \
     sed -E 's/.*href="([^"]+)".*/\1/')
 
+    FullOSurl=$secURL$href
     # Fetch the release date from the FullOSurl page using sed
     release_date_min=$(curl -s $FullOSurl | sed -n 's/.*<div class="note gb-note"><p class="gb-paragraph">Released \([^<]*\)<\/p><\/div>.*/\1/p')
-    echo "Release Date of Full OS: $release_date_min"
 
     # Convert the release date to Unix timestamp
     release_timestamp_min=$(date -j -f "%B %d, %Y" "$release_date_min" +%s)
@@ -166,9 +162,9 @@ if [[ "$SIMS" = 0 ]]; then
 
     # Calculate the difference in days
     days_diff=$(( (current_timestamp_min - release_timestamp_min) / 86400 ))
-    echo "$days_diff days since release date"
-    if [ $days_diff -gt $delay_days ]; then ddb="Yes"; else ddb="NO"; fi
-    echo "Is the release date more than $delay_days days? $ddb"
+    echo "$Current_FullOS released on $release_date_min and its been $days_diff days"
+    if [ $days_diff -gt $delay_days ]; then ddb="yes"; else ddb="no"; fi
+    #echo "Is the release date more than $delay_days days? $ddb"
 else
     echo "~~~~~~"
     echo "Skipping fetching of Apple versions and release dates due to SIMS mode."
@@ -182,7 +178,6 @@ if [[ "$SIMS" = 0 ]]; then
 else
     mac_version=$SIMS_mac_version
 fi
-echo "Installed Version: $mac_version"
 # Extract mac_major version
 major_mac=$(echo "$mac_version" | cut -d '.' -f 1)
 minor_mac=$(echo "$mac_version" | cut -d '.' -f 2)
@@ -197,9 +192,9 @@ version=$(grep "^$major_mac\." /tmp/apple_versions.txt)
 
 # Check if version exists
 if [ -n "$version" ]; then
-    echo "CURRENT build for $major_mac is $version"
+    echo "Installed Version: $mac_version with available build $version"
 else
-    echo "CURRENT build for $major_mac is not available"
+    echo "Installed Version: $mac_version with no available build"
 fi
 
 # Extract major version from the version
@@ -226,7 +221,6 @@ sorted_os_list_n1=$(echo "$sorted_os_list" | grep -v '^'$major_version'')
 hori_list=$(echo "$sorted_os_list" | tr '\n' ' ')
 echo "List of available version: $hori_list"
 highest_version=$(echo "$sorted_os_list" | head -n 1)
-ARCH=$(uname -m)
 Cname=$(scutil --get ComputerName)
 SNum=$(system_profiler SPHardwareDataType | awk '/Serial/ {print $4}')
 
@@ -248,16 +242,18 @@ elif [ $major_version == $major_mac ]; then #Check minor update for current vers
     echo "Device is on the latest major version"
     highest_version="$version"
     echo "Highest version available2: $highest_version"
-
-elif [ "$ddb" == "NO" ]; then
+    ##>>>> Check OK - default is major_version
+elif [ "$ddb" == "no" ]; then #Check if the release date is more than delay days ago
+    echo "Release date is not more than $delay_days days ago"
     highest_version=$(echo "$sorted_os_list_n1" | head -n 1)
     echo "Highest version available3: $highest_version"
-
-elif [ "$ARCH" == "arm64" ]; then
+    ##>>>> Check OK - default is ddb
+elif [ "$ARCH" == "arm64" ]; then #ARM measns always latest version
     echo "Highest version available4: $highest_version"
-
+    ##>>>> Check OK - default is ARM64
 elif [ $major_mac -ge $major_version ]; then
     echo "Highest version available5: $highest_version"
+    ##>>>> Check OK - default is major_mac
 else
     highest_version=""
     echo "Highest version not unavailable"
@@ -266,18 +262,18 @@ fi
 # If SU result is empty, set static value
 if [ -z "$highest_version" ]; then
     # Check if the release date is more than delay days ago
-    if [ "$ddb" == "Yes" ]; then
+    if [ "$ddb" == "yes" ]; then
         major=$((major_version))
-        echo "Allowed OS is $major (static)2"
-    elif [ $major_mac -lt $major_version ]; then
         echo "Allowed OS is $major (static)1"
+    elif [ $major_mac -lt $major_version ]; then
+        echo "Allowed OS is $major (static)2"
     else
-        if [ "$ddb" == "Yes" ]; then
+        if [ "$ddb" == "yes" ]; then
         major=$((major_version))
-        echo "Allowed OS is $major (static)4"
+        echo "Allowed OS is $major (static)3"
         else
         major=$((major - 1))
-        echo "Allowed OS is $major (static)3"
+        echo "Allowed OS is $major (static)4"
         fi
     fi
     version=$(grep "^$major\." /tmp/apple_versions.txt)
@@ -285,8 +281,8 @@ if [ -z "$highest_version" ]; then
     echo "Highest version available: $highest_version"
 fi
 
-# Check if macOS version is less than 12.0
-if (($major_mac < 12)); then
+
+if [ $major_mac -lt $(($major_version - 2)) ]; then
     # If macOS version is less than 12.0, mark as EOL
     echo "EOL"
     sudo rm "$start_date_file"
@@ -302,7 +298,6 @@ elif [[ "$major_mac" -eq "$major_now" && ( "$minor_mac" -ne "$minor_now" || "$su
     sudo /usr/local/bin/hubcli mdmcommand --osupdate --productversion "$highest_version" --installaction InstallForceRestart --priority high --maxuserdeferrals 3
     exit 0
 else
-    echo "Performing Major Update!"
     # If macOS version is outdated, notify user to upgrade
     current_date=$(date +%s)
     elapsed_days=$(( (current_date - start_date) / 86400 ))  # Calculate elapsed days
