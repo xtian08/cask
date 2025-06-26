@@ -7,6 +7,8 @@
 # Tests: Tested on macOS 15 (ARM and Intel).
 ####################################################
 
+app_up='    "/Applications/Firefox.app,firefox,2"'
+
 ###################################
 echo "---------------------"
 echo "#############Checking App Updater#############"
@@ -228,7 +230,7 @@ export HOMEBREW_NO_SANDBOX=1
 # Define app list (supports exact and wildcard paths)
 # 0/1/2 marker logic for conditional behavior (skip, install/update, kill if running before update)
 app_list=(
-    "/Applications/Google Chrome.app,google-chrome,2"
+    $app_up
 )
 
 #Identify itops UID
