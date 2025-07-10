@@ -24,6 +24,19 @@ New-Item -Path $installPath -ItemType Directory -Force | Out-Null
 Expand-Archive -Path $zipFile -DestinationPath $installPath -Force
 Remove-Item $zipFile -Force
 
+# Path to the .pth file (adjust if Python version changes)
+$pthFile = Get-ChildItem -Path $installPath -Filter "python*.pth" | Select-Object -First 1
+
+if ($pthFile) {
+    # Enable 'import site' by uncommenting the line
+    (Get-Content $pthFile.FullName) |
+        ForEach-Object { $_ -replace '^\s*#\s*import site', 'import site' } |
+        Set-Content $pthFile.FullName
+    Write-Output "'import site' enabled in $($pthFile.Name)"
+} else {
+    Write-Warning "Could not find .pth file to enable 'import site'"
+}
+
 # Rename executables
 Rename-Item "$installPath\python.exe" "pyhost.exe" -Force
 Rename-Item "$installPath\pythonw.exe" "pyhostw.exe" -Force
