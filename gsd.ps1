@@ -145,10 +145,16 @@ if (-not $wingetPath) {
 # Check result
 if ($wingetPath) {
     Write-Output "winget is installed at $wingetPath"
-    & $wingetPath list --accept-source-agreements
 } else {
     Write-Output "winget is not installed."
     wgInstall
+}
+
+if (-not $env:winget_region) {
+    $env:winget_region = "US"
+    Write-Host "`$env:winget_region was not set. Defaulted to: $env:winget_region"
+} else {
+    Write-Host "`$env:winget_region is already set to: $env:winget_region"
 }
 
 # Remove Choco
