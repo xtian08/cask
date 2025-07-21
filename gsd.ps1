@@ -131,17 +131,16 @@ function wgInstall{
     # Download and install the latest version of winget
     Repair-WinGetPackageManager -verbose -Force -ErrorAction Ignore | Out-Null
     wgSource
-    winget.exe list --accept-source-agreements
     Write-Output "Winget Install process completed."
 }
 
 # Check if winget command exists
-$wingetPath = (Get-Command winget -ErrorAction SilentlyContinue).Path
+$wingetPath = (Get-Command winget.exe -ErrorAction SilentlyContinue).Source
 if ($null -ne $wingetPath) {
     Write-Output "winget is installed at $wingetPath"
+    & $wingetPath list --accept-source-agreements
 } else {
     Write-Output "winget is not installed."
-    wgInstall
 }
 
 # Remove Choco
