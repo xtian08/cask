@@ -134,13 +134,21 @@ function wgInstall{
     Write-Output "Winget Install process completed."
 }
 
-# Check if winget command exists
+# Try to get winget using Get-Command
 $wingetPath = (Get-Command winget.exe -ErrorAction SilentlyContinue).Source
-if ($null -ne $wingetPath) {
+
+# If not found, try where.exe
+if (-not $wingetPath) {
+    $wingetPath = (& where.exe winget.exe 2>$null | Select-Object -First 1)
+}
+
+# Check result
+if ($wingetPath) {
     Write-Output "winget is installed at $wingetPath"
     & $wingetPath list --accept-source-agreements
 } else {
     Write-Output "winget is not installed."
+    wgInstall
 }
 
 # Remove Choco
