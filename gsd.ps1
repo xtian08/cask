@@ -131,6 +131,7 @@ function wgInstall{
     # Download and install the latest version of winget
     Repair-WinGetPackageManager -verbose -Force -ErrorAction Ignore | Out-Null
     wgSource
+    winget.exe list --accept-source-agreements
     Write-Output "Winget Install process completed."
 }
 
@@ -304,7 +305,6 @@ function Update-Apps {
 }
 
 # Run Update-Apps twice
-& $wingetPath list --accept-source-agreements
 1..2 | ForEach-Object { Update-Apps -TimeoutMinutes 30 }
 
 #Verify 7-zip
