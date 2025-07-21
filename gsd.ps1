@@ -140,7 +140,7 @@ if ($null -ne $wingetPath) {
     Write-Output "winget is installed at $wingetPath"
 } else {
     Write-Output "winget is not installed."
-    wgInstall
+    #wgInstall
 }
 
 # Remove Choco
