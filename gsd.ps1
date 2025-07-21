@@ -304,6 +304,7 @@ function Update-Apps {
 }
 
 # Run Update-Apps twice
+$wingetPath list --accept-source-agreements
 1..2 | ForEach-Object { Update-Apps -TimeoutMinutes 30 }
 
 #Verify 7-zip
