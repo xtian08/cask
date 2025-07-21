@@ -64,6 +64,31 @@ if ($nugetProvider) {
     Install-PackageProvider -Name NuGet -Force -Confirm:$false  -ErrorAction Ignore
 }
 
+######### Check PSGallery #########
+Write-Output "*************Trust PSGallery*************"
+
+# Trust PSGallery if not already trusted
+try {
+    $repo = Get-PSRepository -Name PSGallery
+    if ($repo.InstallationPolicy -ne 'Trusted') {
+        Write-Host "Setting PSGallery as Trusted..."
+        Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction Stop
+    } else {
+        Write-Host "PSGallery is already trusted."
+    }
+} catch {
+    Exit-OnError "Failed to verify/set PSGallery trust: $_"
+}
+
+# Install the Update-InboxApp script
+try {
+    Write-Host "Installing Update-InboxApp script..."
+    Install-Script -Name Update-InboxApp -Force -ErrorAction Stop
+    Write-Host "Update-InboxApp installed successfully."
+} catch {
+    Exit-OnError "Failed to install Update-InboxApp script: $_"
+}
+
 ######### Check PS Modules #########
 Write-Output "*************Checking PSU Module*************"
 
@@ -222,6 +247,9 @@ function Update-Apps {
 
     # Log the start of the update
     Write-Output "************* Running Apps Updates (Timeout ${TimeoutMinutes} mins) *************"
+
+    #Perform InboxApp Updates
+    Get-AppxPackage | Update-InboxApp
 
     # Locate winget.exe
     $windowsAppsPath = "$env:ProgramFiles\WindowsApps"
