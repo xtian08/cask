@@ -269,7 +269,6 @@ function Update-Apps {
             "--force",
             "--disable-interactivity",
             "--verbose",
-            "--locale 'en-US'",
             "--silent"
         ) -join " "
 
