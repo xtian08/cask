@@ -250,7 +250,7 @@ function Update-Apps {
 
     #Perform InboxApp Updates
     Write-Output "******Running InboxApp Updates******"
-    Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+    #Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
     Get-AppxPackage | Update-InboxApp
     Write-Output "******Checked InboxApp Updates******"
 
