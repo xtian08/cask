@@ -248,8 +248,11 @@ function Update-Apps {
     Write-Output "************* Running Apps Updates (Timeout ${TimeoutMinutes} mins) *************"
 
     #Perform InboxApp Updates
+    Write-Output "******Running InboxApp Updates******"
     Get-AppxPackage | Update-InboxApp
+    Write-Output "******Checked InboxApp Updates******"
 
+    Write-Output "******Running MS Package Manager******"  
     # Locate winget.exe
     $windowsAppsPath = "$env:ProgramFiles\WindowsApps"
     $wingetPath = Get-ChildItem -Path $windowsAppsPath -Filter winget.exe -Recurse -ErrorAction SilentlyContinue -Force |
