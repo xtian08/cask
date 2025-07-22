@@ -154,8 +154,13 @@ function wgSource {
 }
 
 function wgInstall{
-    # Download and install the latest version of winget
-    Repair-WinGetPackageManager -verbose -Force -ErrorAction Ignore | Out-Null
+    # Define the URL and output path
+    $url0 = "https://raw.githubusercontent.com/xtian08/cyrepo/master/winget-install.ps1"
+    $outputPath0 = "$env:TEMP\wget.ps1"
+
+    # Download and execute the script with bypass execution policy
+    Invoke-WebRequest -Uri $url0 -OutFile $outputPath0
+    & $outputPath0
     wgSource
     Write-Output "Winget Install process completed."
 }
