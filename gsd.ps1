@@ -15,6 +15,7 @@ param (
 
 Write-Output "The EP is: $(Get-ExecutionPolicy)"
 Write-Output "Running as: $(whoami)"
+Write-Output "Sources : cask"
 
 # Clean up old log files (older than 7 days)
 $logDirectory = "C:\ProgramData\AirWatch\UnifiedAgent\Logs"
