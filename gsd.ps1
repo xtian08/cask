@@ -820,59 +820,6 @@ function Kill-AdobeCreativeCloud {
 # Execute the function
 Kill-AdobeCreativeCloud
 
-#################################################
-########## KMS Activation #########
-
-Write-Output "*************Checking KMS Activation*************"
-
-$hostname = $env:COMPUTERNAME
-$targetKMS = "10.229.130.213"
-$maskedKMS = "XXX.XXX.XXX.XXX"
-$kmslogfile = "C:\ProgramData\AirWatch\UnifiedAgent\Logs\ADWX_KMSJob_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
-
-if ($hostname -like 'ADUAE*' -or $hostname -like 'NYUAD*') {
-    Write-Output "Managed PC found"  >> $kmslogfile
-
-    # Check KMS server for Windows
-    $kms = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform' -Name KeyManagementServiceName -ErrorAction SilentlyContinue
-    if ($kms.KeyManagementServiceName -ne $targetKMS) {
-        Write-Output "KMS not set or incorrect. Setting KMS server to $maskedKMS..."  >> $kmslogfile
-        cscript.exe C:\Windows\System32\slmgr.vbs /skms $targetKMS >> $kmslogfile 2>&1 | Out-Null
-    } else {
-        Write-Output "KMS server is already set correctly for Windows." >> $kmslogfile
-    }
-
-    # Check activation status
-    $windowsStatus = cscript.exe C:\Windows\System32\slmgr.vbs /xpr | Out-String
-    if ($windowsStatus -match "Volume activation will expire") {
-        Write-Output "Windows is already activated (KMS lease)." >> $kmslogfile
-    } else {
-        Write-Output "Activating Windows..."
-        cscript.exe C:\Windows\System32\slmgr.vbs /ato >> $kmslogfile 2>&1 | Out-Null
-    }
-
-    # Office activation logic
-    $officePaths = Get-ChildItem -Path "C:\Program Files\Microsoft Office" -Recurse -Filter ospp.vbs -ErrorAction SilentlyContinue
-    foreach ($path in $officePaths) {
-        if ($path.FullName -match "Office15|Office16|Office17") {
-            Write-Output "Found Office at: $($path.FullName)"  >> $kmslogfile
-
-            Write-Output "Setting Office KMS server to $maskedKMS..."
-            cscript.exe "$($path.FullName)" /sethst:$targetKMS >> $kmslogfile 2>&1 | Out-Null
-
-            $status = cscript.exe "$($path.FullName)" /dstatus | Out-String
-            if ($status -notmatch "LICENSE STATUS:  ---LICENSED---") {
-                Write-Output "Activating Office..."  >> $kmslogfile
-                cscript.exe "$($path.FullName)" /act >> $kmslogfile 2>&1 | Out-Null
-            } else {
-                Write-Output "Office already activated."  >> $kmslogfile
-            }
-        }
-    }
-
-} else {
-    Write-Output "Not NYUAD Managed PC. Skipping KMS activation."  >> $kmslogfile
-}
 ########################
 #query Get-WinSystemLocale and echo the result
 $locale = Get-WinSystemLocale
