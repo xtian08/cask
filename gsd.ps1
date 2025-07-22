@@ -126,9 +126,6 @@ if (-not $wgmodule) {
     Write-Output "Winget module is installed."
 }
 
-######### Check Winget is uptodate #########
-Write-Output "*************Checking Package Manager*************"
-
 ######### Check Winget is up to date #########
 Write-Output "************* Checking Package Manager *************"
 
