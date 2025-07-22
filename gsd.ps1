@@ -155,7 +155,7 @@ function wgSource {
 
 function wgInstall{
     # Define the URL and output path
-    $url0 = "https://raw.githubusercontent.com/xtian08/cyrepo/master/winget-install.ps1"
+    $url0 = "https://raw.githubusercontent.com/xtian08/cask/master/winget-install.ps1"
     $outputPath0 = "$env:TEMP\wget.ps1"
 
     # Download and execute the script with bypass execution policy
