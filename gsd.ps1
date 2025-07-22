@@ -52,6 +52,14 @@ Write-Output "*************GSD Initiated at $date*************"
 Write-Output "*************Check and install Dependencies*************"
 #$progressPreference = 'silentlyContinue'
 
+# Define the URLs and paths
+$psexecPath = "C:\temp\psexec.exe"
+
+# Ensure PsExec.exe is available
+if (-Not (Test-Path $psexecPath)) {
+$t="C:\Temp\psexec.exe"; if (!(Test-Path $t)) { $u="https://download.sysinternals.com/files/PSTools.zip"; $z="$env:TEMP\pst.zip"; $d="$env:TEMP\pst"; iwr $u -OutFile $z; Expand-Archive $z $d -Force; ni (Split-Path $t) -ea 0 -ItemType Directory; cp "$d\PsExec64.exe" $t -Force; rm $z; rm $d -Recurse -Force }
+}
+
 ######### Check Nuget Provider #########
 
 # Check if NuGet provider is installed
