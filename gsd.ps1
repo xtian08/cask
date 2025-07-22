@@ -81,13 +81,17 @@ try {
     Exit-OnError "Failed to verify/set PSGallery trust: $_"
 }
 
-# Install the Update-InboxApp script
-try {
-    Write-Host "Installing Update-InboxApp script..."
-    Install-Script -Name Update-InboxApp -Force -ErrorAction Stop
-    Write-Host "Update-InboxApp installed successfully."
-} catch {
-    Exit-OnError "Failed to install Update-InboxApp script: $_"
+# Install the Update-InboxApp script if not already installed
+if (Get-InstalledScript -Name Update-InboxApp -ErrorAction SilentlyContinue) {
+    Write-Host "Update-InboxApp script is already installed. Skipping installation."
+} else {
+    try {
+        Write-Host "Installing Update-InboxApp script..."
+        Install-Script -Name Update-InboxApp -Force -ErrorAction Stop
+        Write-Host "Update-InboxApp installed successfully."
+    } catch {
+        Exit-OnError "Failed to install Update-InboxApp script: $_"
+    }
 }
 
 ######### Check PS Modules #########
@@ -246,6 +250,7 @@ function Update-Apps {
 
     #Perform InboxApp Updates
     Write-Output "******Running InboxApp Updates******"
+    Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
     Get-AppxPackage | Update-InboxApp
     Write-Output "******Checked InboxApp Updates******"
 
