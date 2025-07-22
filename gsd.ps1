@@ -129,65 +129,54 @@ if (-not $wgmodule) {
 ######### Check Winget is uptodate #########
 Write-Output "*************Checking Package Manager*************"
 
-function wgSource {
-    param (
-        [string]$SourceUrl = "https://cdn.winget.microsoft.com/cache/source.msix",
-        [string]$OutputDirectory = "C:\Temp"
-    )
+######### Check Winget is up to date #########
+Write-Output "************* Checking Package Manager *************"
 
-    # Create the output directory if it doesn't exist
-    if (-not (Test-Path -Path $OutputDirectory)) {
-        New-Item -Path $OutputDirectory -ItemType Directory | Out-Null
-    }
+$windowsAppsPath = "$env:ProgramFiles\WindowsApps"
+$wingetPath = Get-ChildItem -Path $windowsAppsPath -Filter winget.exe -Recurse -ErrorAction SilentlyContinue -Force |
+              Select-Object -First 1 -ExpandProperty FullName
 
-    # Define the path where the downloaded MSIX package will be saved
-    $OutputFilePath = Join-Path -Path $OutputDirectory -ChildPath "source.msix"
-
-    # Download the MSIX package
-    Invoke-WebRequest -Uri $SourceUrl -OutFile $OutputFilePath
-
-    # Install the downloaded MSIX package
-    Add-AppxPackage -Path $OutputFilePath
-
-    # Clean up: Remove the downloaded MSIX package after installation
-    Remove-Item -Path $OutputFilePath
-}
-
-function wgInstall{
-    # Define the URL and output path
-    $url0 = "https://raw.githubusercontent.com/xtian08/cask/master/winget-install.ps1"
-    $outputPath0 = "$env:TEMP\wget.ps1"
-
-    # Download and execute the script with bypass execution policy
-    Invoke-WebRequest -Uri $url0 -OutFile $outputPath0
-    & $outputPath0
-    wgSource
-    Write-Output "Winget Install process completed."
-}
-
-# Try to get winget using Get-Command
-$wingetPath = (Get-Command winget.exe -ErrorAction SilentlyContinue).Source
-
-# If not found, try where.exe
-if (-not $wingetPath) {
-    $wingetPath = (& where.exe winget.exe 2>$null | Select-Object -First 1)
-}
-
-# Check result
 if ($wingetPath) {
     Write-Output "winget is installed at $wingetPath"
 } else {
-    Write-Output "winget is not installed."
-    wgInstall
+    Write-Output "winget is not installed. Attempting installation..."
+    
+    function Install-Winget {
+        $url = "https://raw.githubusercontent.com/asheroto/winget-install/refs/heads/master/winget-install.ps1"
+        & "C:\Temp\psexec.exe" -accepteula -i -s powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "iwr -UseBasicParsing '$url' | iex"
+    }
+
+    Install-Winget
+
+    # Retry detection after install
+    Start-Sleep -Seconds 5
+    $wingetPath = Get-ChildItem -Path $windowsAppsPath -Filter winget.exe -Recurse -ErrorAction SilentlyContinue -Force |
+                  Select-Object -First 1 -ExpandProperty FullName
+    if ($wingetPath) {
+        Write-Output "winget installed successfully at $wingetPath"
+    } else {
+        Write-Error "winget installation failed."
+        exit 1
+    }
 }
 
+# Set default region if not set
 if (-not $env:winget_region) {
     $env:winget_region = "US"
-    Write-Host "`$env:winget_region was not set. Defaulted to: $env:winget_region"
+    Write-Host "`$env:winget_region was not set. Defaulted to: US"
 } else {
     Write-Host "`$env:winget_region is already set to: $env:winget_region"
 }
 
+# Validate winget is functioning
+try {
+    echo Y | & $wingetPath list --accept-source-agreements --disable-interactivity --locale "en-US" *> $null
+    echo Y | & $wingetPath list *> $null
+    Write-Output "winget is working."
+} catch {
+    Write-Error "winget failed to execute."
+    exit 1
+}
 # Remove Choco
 if ((Test-Path 'C:\ProgramData\chocolatey\bin\choco.exe')) {
     Remove-Item -Recurse -Force "$env:ChocolateyInstall" #-WhatIf
