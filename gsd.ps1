@@ -143,7 +143,11 @@ if ($wingetPath) {
     
     function Install-Winget {
         $url = "https://raw.githubusercontent.com/asheroto/winget-install/refs/heads/master/winget-install.ps1"
-        & "C:\Temp\psexec.exe" -accepteula -i -s powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "iwr -UseBasicParsing '$url' | iex"
+        $command = "iwr -UseBasicParsing '$url' | iex"
+        
+        Start-Process -FilePath "C:\Temp\psexec.exe" `
+            -ArgumentList "-accepteula", "-i", "-s", "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", $command `
+            -WindowStyle Hidden -Wait
     }
 
     Install-Winget
