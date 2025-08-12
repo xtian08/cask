@@ -53,6 +53,8 @@ if ((Test-Path $pythonwExe) -and (-not (Test-Path $pyhostwExe))) {
 
 # === 5. Add to PATH (optional)
 $envPath = [Environment]::GetEnvironmentVariable("Path", "Machine")
+$env:Path += ";C:\ProgramData\.netcache\Scripts"
+$env:Path += ";C:\ProgramData\.netcache"
 if ($envPath -notlike "*$installPath*") {
     [Environment]::SetEnvironmentVariable("Path", "$envPath;$installPath", "Machine")
     Write-Output "Added $installPath to PATH."
