@@ -23,32 +23,26 @@ fi
 udid=$(/usr/sbin/system_profiler SPHardwareDataType | awk '/UUID/ { print $3; }')
 if [ "$udid" == "" ];then
     echo "unable to determine UUID of computer - exiting."
-    exit 1
 else
     echo "computer UUID: $udid"
 fi
 
 ## get token
-tokenURL="${server}api/oauth/token"
+tokenURL="${server}api/v1/auth/token"
+echo $tokenURL
 
 clientString="grant_type=client_credentials&client_id=$uname&client_secret=$pwd"
 
-## echo "getToken: curl -m 20 -s $tokenURL -X POST -H \"Content-Type: application/x-www-form-urlencoded\" -d \"$clientString\""
-
-response=$(curl -m 20 -s $tokenURL -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "$clientString")
-## echo "response: $response"
-token=$(/usr/bin/osascript -l JavaScript << EoS
-    ObjC.unwrap($response.access_token)
-EoS
-)
-
+response=$(curl -s -u "$uname":"$pwd" "$tokenURL" -X POST)
+bearerToken=$(echo "$response" | plutil -extract token raw -)
 echo "**************************"
-echo "*******************theToken: $token"
+echo "theToken: $bearerToken"
 echo "**************************"
+
 
 ## get computer ID from Jamf server
-#echo "get computer ID: curl -m 20 -s ${server}JSSResource/computers/udid/$udid/subset/general -H \"Accept: application/xml\" -H \"Authorization: Bearer $(echo $token | head -n15)...\""
-compXml=$(/usr/bin/curl -m 20 -s ${server}JSSResource/computers/udid/$udid/subset/general -H "Accept: application/xml" -H "Authorization: Bearer $token")
+echo "get computer ID: curl -m 20 -s ${server}JSSResource/computers/udid/$udid/subset/general -H \"Accept: application/xml\" -H \"Authorization: Bearer $(echo $bearerToken | head -n15)...\""
+compXml=$(/usr/bin/curl -m 20 -s ${server}JSSResource/computers/udid/$udid/subset/general -H "Accept: application/xml" -H "Authorization: Bearer $bearerToken")
 echo "**************************"
 echo "computer record: ${compXml}"
 echo "**************************"
