@@ -202,6 +202,29 @@ launchctl unload /Library/LaunchDaemons/com.user.networkmonitor.plist 2>/dev/nul
 launchctl load /Library/LaunchDaemons/com.user.networkmonitor.plist
 launchctl start com.user.networkmonitor
 
+# --------------------------
+# 3. Patch AnyConnect profile for OnConnect hook
+# --------------------------
+
+copy_profile() {
+    # execute the write_profile function from the watchdog script with privileges
+    sudo /bin/bash "$WATCHDOG_BIN"
+}
+
+if [[ -f "$PROFILE" ]]; then
+    if ! grep -q "Outside" "$PROFILE"; then
+        copy_profile
+        echo "[+] OnConnect/OnDisconnect hooks added to $PROFILE"
+    else
+        echo "[*] Hooks already present, skipping patch"
+    fi
+else
+    echo "[!] AnyConnect profile not found at $PROFILE, re-adding patch"
+    copy_profile
+fi
+
+echo "[✓] AnyConnect IP Watchdog installation complete"
+
 print_success "Network monitor installed and started!"
 echo ""
 print_status "The monitor will:"
@@ -215,3 +238,4 @@ echo "  sudo nano $tempest"
 echo "  sudo chmod +x $tempest"
 echo ""
 print_status "Check logs with: tail -f /var/log/network_monitor.log"
+
