@@ -1,3 +1,4 @@
+
 <#
 .DESCRIPTION
   This PowerShell script is invoke windows update via PS module
@@ -15,11 +16,33 @@ param (
 
 Write-Output "The EP is: $(Get-ExecutionPolicy)"
 Write-Output "Running as: $(whoami)"
-Write-Output "Sources : cask"
+Write-Output "Sources : nyrepo"
+$curVer = $PSVersionTable.PSVersion
+Write-Output "Current PowerShell version: $curVer"
+
+# Detect OS architecture
+$arch = if ([Environment]::Is64BitOperatingSystem) {
+    if ([Environment]::Is64BitProcess) { "x64" } else { "x86" }
+} else {
+    "x86"
+}
+
+# Detect processor architecture explicitly
+$cpuArch = $ENV:PROCESSOR_ARCHITECTURE
+$cpuArchWoW64 = $ENV:PROCESSOR_ARCHITEW6432
+
+# Final decision (handles ARM too)
+switch -Regex ($cpuArch + $cpuArchWoW64) {
+    "ARM64" { $arch = "ARM64" }
+    "AMD64" { $arch = "x64" }
+    "x86"   { $arch = "x86" }
+}
+
+Write-Output "Detected Architecture: $arch"
 
 # Clean up old log files (older than 7 days)
 $logDirectory = "C:\ProgramData\AirWatch\UnifiedAgent\Logs"
-$logRetentionDays = 7
+$logRetentionDays = 1
 $logFiles = Get-ChildItem -Path $logDirectory -Filter "ADWX_*.log" -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-$logRetentionDays) } 
 foreach ($logFile in $logFiles) {
     try {
@@ -151,16 +174,12 @@ if ($wingetPath) {
 } else {
     Write-Output "winget is not installed. Attempting installation..."
     
-    function Install-Winget {
+    function wgInstall {
         $url = "https://raw.githubusercontent.com/asheroto/winget-install/refs/heads/master/winget-install.ps1"
-        $command = "iwr -UseBasicParsing '$url' | iex"
-        
-        Start-Process -FilePath "C:\Temp\psexec.exe" `
-            -ArgumentList "-accepteula", "-i", "-s", "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", $command `
-            -WindowStyle Hidden -Wait
+        & "C:\Temp\psexec.exe" -accepteula -i -s powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "iwr -UseBasicParsing '$url' | iex"
     }
 
-    Install-Winget
+    wgInstall
 
     # Retry detection after install
     Start-Sleep -Seconds 5
@@ -169,8 +188,9 @@ if ($wingetPath) {
     if ($wingetPath) {
         Write-Output "winget installed successfully at $wingetPath"
     } else {
-        Write-Error "winget installation failed."
-        exit 1
+        Write-Error "winget installation 2nd attempt."
+        Repair-WinGetPackageManager -AllUsers -Force -Latest -Verbose
+        Update-InboxApp "Microsoft.DesktopAppInstaller_8wekyb3d8bbwe"
     }
 }
 
@@ -189,7 +209,6 @@ try {
     Write-Output "winget is working."
 } catch {
     Write-Error "winget failed to execute."
-    exit 1
 }
 # Remove Choco
 if ((Test-Path 'C:\ProgramData\chocolatey\bin\choco.exe')) {
@@ -257,12 +276,6 @@ function Update-Apps {
     # Log the start of the update
     Write-Output "************* Running Apps Updates (Timeout ${TimeoutMinutes} mins) *************"
 
-    #Perform InboxApp Updates
-    Write-Output "******Running InboxApp Updates******"
-    #Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
-    Get-AppxPackage | Update-InboxApp
-    Write-Output "******Checked InboxApp Updates******"
-
     Write-Output "******Running MS Package Manager******"  
     # Locate winget.exe
     $windowsAppsPath = "$env:ProgramFiles\WindowsApps"
@@ -277,17 +290,28 @@ function Update-Apps {
         Write-Output "Winget version (installed): $wingetVersion"
 
         # Get latest winget version from GitHub
-        $latestWingetRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/microsoft/winget-cli/releases/latest"
-        $latestWingetVersion = $latestWingetRelease.tag_name.TrimStart("v")  # Strip leading "v" if present
-        Write-Output "Winget version (latest): $latestWingetVersion"
+        $response = Invoke-WebRequest -Uri "https://github.com/microsoft/winget-cli/releases/latest" -UseBasicParsing
+        if ($response.StatusCode -eq 200) {
+            if ($response.Headers.'Content-Location') {
+                $latestUrl = $response.Headers.'Content-Location'
+            } else {
+                $latestUrl = $response.RawContent -match 'href="(/microsoft/winget-cli/releases/tag/v[0-9.]+)"' | Out-Null
+                $latestUrl = "https://github.com" + $matches[1]
+            }
+        
+            $latestVersion = $latestUrl -split "/" | Select-Object -Last 1
+            $latestVersion = $latestVersion.TrimStart("v")
+            Write-Output "Latest Winget version: $latestVersion"
+        }
 
         # Normalize both versions (remove leading 'v' if present)
         $installedVersion = $wingetVersion.TrimStart("v")
-        $latestVersion = $latestWingetVersion.TrimStart("v")
 
         if ($installedVersion -ne $latestVersion) {
             Write-Output "Winget is outdated. Installed: $installedVersion, Latest: $latestVersion"
-            wgInstall
+            Repair-WinGetPackageManager -Force -Verbose -Version $latestVersion
+            Update-InboxApp "Microsoft.DesktopAppInstaller_8wekyb3d8bbwe"
+            Write-Output "Winget updater performed"
         } else {
             Write-Output "Winget is up to date."
         }
@@ -314,33 +338,28 @@ function Update-Apps {
         ) -join " "
 
         # Define log file path with timestamp
-        $logFilePath = "C:\ProgramData\AirWatch\UnifiedAgent\Logs\ADWX_WingetJob_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+        $wglogFilePath = "C:\ProgramData\AirWatch\UnifiedAgent\Logs\ADWX_WingetJob_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
 
         # Build the command with proper quoting
         $wingetCommand = "`"$wingetPath`" $wingetArgs"
         $cmdCommand = "/accepteula -s cmd /c `"$wingetCommand`""
 
         # Open a new PowerShell window to monitor the log and auto-close when "Job completed" is found
-        $watch = "while(1){Clear-Host; `$l=Get-Content '$logFilePath'; `$l|%{Write-Host `$_.Trim()}; if(`$l -match 'Job completed'){break}; Start-Sleep 2}; exit"
+        $watch = "while(1){Clear-Host; `$l=Get-Content '$wglogFilePath'; `$l|%{Write-Host `$_.Trim()}; if(`$l -match 'Job completed'){break}; Start-Sleep 2}; exit"
         Start-Process powershell -ArgumentList "-NoExit", "-Command $watch" -ErrorAction SilentlyContinue
 
         # Start winget.exe via PsExec
-        $process = Start-Process -FilePath $psexecPath -ArgumentList "$cmdCommand > $logFilePath 2>&1" -PassThru -Wait -NoNewWindow 
+        $process = Start-Process -FilePath $psexecPath -ArgumentList "$cmdCommand > $wglogFilePath 2>&1" -PassThru -Wait -NoNewWindow
 
         # Wait for completion or timeout
         $timeout = $TimeoutMinutes * 60
         $process.WaitForExit($timeout * 1000)
-        Add-Content -Path $logFilePath -Value "Job completed"
-
-        if (Test-Path $wingetPath) {
-            & $wingetPath list | Out-File -FilePath $logFilePath -Append
-            Write-Host "Installed apps list has been logged to $logFilePath"
-        } 
+        Add-Content -Path $wglogFilePath -Value "Job completed"
 
         # Log handling
-        if (Test-Path $logFilePath) {
-            $logContent = Get-Content -Path $logFilePath
-            Write-Host "Log File Content:`n$logContent"
+        if (Test-Path $wglogFilePath) {
+            $wglogContent = Get-Content -Path $wglogFilePath
+            Write-Host "Log File Content:`n$wglogContent"
         } else {
             Write-Host "Log file not found."
         }
@@ -360,6 +379,18 @@ function Update-Apps {
 
 # Run Update-Apps twice
 1..2 | ForEach-Object { Update-Apps -TimeoutMinutes 30 }
+
+# List installed apps and log to file
+if (Test-Path $wingetPath) {
+    & $wingetPath list #| Out-File -FilePath $wglogFilePath -Append
+    Write-Host "Installed apps list" # has been logged to $wglogFilePath"
+}
+
+#Perform InboxApp Updates
+Write-Output "******Running InboxApp Updates******"
+#Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+Get-AppxPackage | Update-InboxApp
+Write-Output "******Checked InboxApp Updates******"
 
 #Verify 7-zip
 function Get-7ZipVersionByPath {
@@ -829,6 +860,113 @@ function Kill-AdobeCreativeCloud {
 # Execute the function
 Kill-AdobeCreativeCloud
 
+#################################################
+########## KMS Activation #########
+
+Write-Output "*************Checking KMS Activation*************"
+
+$hostname = $env:COMPUTERNAME
+$targetKMS = "10.229.130.213"
+$maskedKMS = "XXX.XXX.XXX.XXX"
+$kmslogfile = "C:\ProgramData\AirWatch\UnifiedAgent\Logs\ADWX_KMSJob_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+
+if ($hostname -like 'ADUAE*' -or $hostname -like 'NYUAD*') {
+    Write-Output "Managed PC found"  >> $kmslogfile
+
+    # Check KMS server for Windows
+    $kms = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform' -Name KeyManagementServiceName -ErrorAction SilentlyContinue
+    if ($kms.KeyManagementServiceName -ne $targetKMS) {
+        Write-Output "KMS not set or incorrect. Setting KMS server to $maskedKMS..."  >> $kmslogfile
+        cscript.exe C:\Windows\System32\slmgr.vbs /skms $targetKMS >> $kmslogfile 2>&1 | Out-Null
+    } else {
+        Write-Output "KMS server is already set correctly for Windows." >> $kmslogfile
+    }
+
+    # Check activation status
+    $windowsStatus = cscript.exe C:\Windows\System32\slmgr.vbs /xpr | Out-String
+    if ($windowsStatus -match "Volume activation will expire") {
+        Write-Output "Windows is already activated (KMS lease)." >> $kmslogfile
+    } else {
+        Write-Output "Activating Windows..."
+        cscript.exe C:\Windows\System32\slmgr.vbs /ato >> $kmslogfile 2>&1 | Out-Null
+    }
+
+    # Office activation logic
+    $officePaths = Get-ChildItem -Path "C:\Program Files\Microsoft Office" -Recurse -Filter ospp.vbs -ErrorAction SilentlyContinue
+    foreach ($path in $officePaths) {
+        if ($path.FullName -match "Office15|Office16|Office17") {
+            Write-Output "Found Office at: $($path.FullName)"  >> $kmslogfile
+
+            Write-Output "Setting Office KMS server to $maskedKMS..."
+            cscript.exe "$($path.FullName)" /sethst:$targetKMS >> $kmslogfile 2>&1 | Out-Null
+
+            $status = cscript.exe "$($path.FullName)" /dstatus | Out-String
+            if ($status -notmatch "LICENSE STATUS:  ---LICENSED---") {
+                Write-Output "Activating Office..."  >> $kmslogfile
+                cscript.exe "$($path.FullName)" /act >> $kmslogfile 2>&1 | Out-Null
+            } else {
+                Write-Output "Office already activated."  >> $kmslogfile
+            }
+        }
+    }
+
+} else {
+    Write-Output "Not NYUAD Managed PC. Skipping KMS activation."  >> $kmslogfile
+}
+########################
+# Remove-MSXML4.ps1
+# Detects and removes msxml4.dll only (System32 & SysWOW64)
+
+function Remove-MSXML4Dll {
+    $searchPaths = @(
+        "$env:WINDIR\System32\msxml4.dll",
+        "$env:WINDIR\SysWOW64\msxml4.dll"
+    )
+
+    foreach ($file in $searchPaths) {
+        if (Test-Path $file) {
+            try {
+                Write-Host "🗑 Removing file: $file" -ForegroundColor Yellow
+                Remove-Item -Path $file -Force -ErrorAction Stop
+                Write-Host "✅ Successfully removed: $file" -ForegroundColor Green
+            } catch {
+                Write-Host "❌ Failed to remove: $file - $($_.Exception.Message)" -ForegroundColor Red
+            }
+        } else {
+            Write-Host "ℹ File not found: $file" -ForegroundColor DarkGray
+        }
+    }
+}
+
+function Remove-MSXML4Registry {
+    $msxmlKeys = @(
+        "HKLM:\SOFTWARE\Microsoft\MSXML4",
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\MSXML4"
+    )
+
+    foreach ($key in $msxmlKeys) {
+        if (Test-Path $key) {
+            try {
+                Write-Host "🗑 Removing registry key: $key" -ForegroundColor Yellow
+                Remove-Item -Path $key -Recurse -Force -ErrorAction Stop
+                Write-Host "✅ Successfully removed: $key" -ForegroundColor Green
+            } catch {
+                Write-Host "❌ Failed to remove: $key - $($_.Exception.Message)" -ForegroundColor Red
+            }
+        } else {
+            Write-Host "ℹ Registry key not found: $key" -ForegroundColor DarkGray
+        }
+    }
+}
+
+# --- Main Execution ---
+Write-Host "🔍 Searching and removing msxml4.dll & registry entries..." -ForegroundColor Cyan
+
+Remove-MSXML4Dll
+Remove-MSXML4Registry
+
+Write-Host "✔ msxml4.dll cleanup complete." -ForegroundColor Cyan
+
 ########################
 #query Get-WinSystemLocale and echo the result
 $locale = Get-WinSystemLocale
@@ -852,6 +990,7 @@ if ($disk.PartitionStyle -eq 'GPT') {
 }
 
 # Stop logging
+Write-Output "*************GSD Patch Completed at $date*************"
 Stop-Transcript
 
 Write-Output "*************Checking old logs*************"
@@ -869,3 +1008,5 @@ foreach ($folder in $folders) {
         }
     }
 }
+
+exit 0
