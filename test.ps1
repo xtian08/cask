@@ -47,8 +47,8 @@ if ($installed) {
     Write-Host "VL Installation completed."
     
     # Optional cleanup
-    Remove-Item $extractPath\*.exe -Recurse -Force
-    Remove-Item $extractPath\*.xml -Recurse -Force
+    #Remove-Item $extractPath\*.exe -Recurse -Force
+    #Remove-Item $extractPath\*.xml -Recurse -Force
     Write-Host "Cleanup completed."
     
     $hostname = $env:COMPUTERNAME
