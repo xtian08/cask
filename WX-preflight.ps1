@@ -155,10 +155,9 @@ if (-not $wgmodule) {
 
 ######### Check Winget is up to date #########
 Write-Output "************* Checking Package Manager *************"
-$wgAPPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget-install.ps1 
+$wgAPPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget-install.ps1 -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
 $wingetPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget.exe -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
 $wgPATH = $wingetPath
-echo "winget.exe path: $wingetPath"
 
 function wgetInstall {
     #$Force = $true
