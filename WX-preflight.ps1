@@ -55,7 +55,7 @@ $systemAccounts = @(
 
 $date = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
-function xBootstrap {
+#function xBootstrap {
 
 Write-Output "*************Check and install Dependencies*************"
 #$progressPreference = 'silentlyContinue'
@@ -155,10 +155,12 @@ if (-not $wgmodule) {
 
 ######### Check Winget is up to date #########
 Write-Output "************* Checking Package Manager *************"
-$wgAPPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget-install.ps1 -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
+$wgAPPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget-install.ps1 
 $wingetPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget.exe -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
+$wgPATH = $wingetPath
+echo "winget.exe path: $wingetPath"
 
-function wgInstall {
+function wgetInstall {
     #$Force = $true
     #& "C:\Temp\psexec.exe" -accepteula -i -s powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "irm 'asheroto.com/winget' | iex" *>> $LogFiledebug
     $psiArgs = "-NoProfile -ExecutionPolicy Bypass -File `"$wgAPPath`" -Force"
@@ -166,6 +168,7 @@ function wgInstall {
 
     # Retry detection after install
     Start-Sleep -Seconds 5
+    $wgPATH
     if ($wingetPath) {
         Write-Output "winget installed successfully at $wingetPath"
     } else {
@@ -193,17 +196,17 @@ function wgInstall {
 
 }
 
-$wingetPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget.exe -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
+$wgPATH
 if ($wingetPath) {
     Write-Output "winget is installed at $wingetPath"
 } else {
     Write-Output "winget is not installed. Attempting installation..."
-    wgInstall
+    wgetInstall
 }
 ######### Check Winget is up to date #########
 Write-Output "************* Checking Winget Version *************"
 
-$wingetPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget.exe -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
+$wgPATH
 if (Test-Path $wingetPath) {
     # Get installed winget version
     $wingetVersion = & "$wingetPath" --version
@@ -231,7 +234,7 @@ if (Test-Path $wingetPath) {
         Write-Output "Winget is outdated. Installed: $installedVersion, Latest: $latestVersion"
         Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force 
         try {
-            wgInstall
+            wgetInstall
         }
         finally {
             Write-Output "Winget updater performed"
@@ -243,7 +246,7 @@ if (Test-Path $wingetPath) {
 
 } else {
     Write-Output "winget.exe not found."
-    wgInstall
+    wgetInstall
 }
 
 # Check if PsExec.exe is already present
@@ -264,7 +267,7 @@ Write-Output "************* Update PS7 *************"
 $pwshPATH = Get-ChildItem -Path "C:\Program Files\" -Filter pwsh.exe -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
 Write-Output "pwsh.exe path: $pwshPATH"
 
-$wingetPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget.exe -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
+$wgPATH
 Start-Process -FilePath $wingetPath -ArgumentList @(
     "install", "--id", "Microsoft.PowerShell", "--silent", 
     "--accept-package-agreements", "--accept-source-agreements", "-e"
@@ -272,7 +275,7 @@ Start-Process -FilePath $wingetPath -ArgumentList @(
 
 }
 
-1..2 | ForEach-Object { xBootstrap }
+#1..2 | ForEach-Object { xBootstrap }
 #Clean old logs
 
 $folders = @("C:\Temp", "C:\ProgramData\Airwatch\unifiedagent\logs", "C:\Users\Public")
