@@ -157,7 +157,6 @@ if (-not $wgmodule) {
 Write-Output "************* Checking Package Manager *************"
 $wgAPPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget-install.ps1 -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
 $wingetPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget.exe -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
-$wgPATH = $wingetPath
 
 function wgetInstall {
     #$Force = $true
@@ -167,7 +166,7 @@ function wgetInstall {
 
     # Retry detection after install
     Start-Sleep -Seconds 5
-    $wgPATH
+    $wingetPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget.exe -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
     if ($wingetPath) {
         Write-Output "winget installed successfully at $wingetPath"
     } else {
@@ -195,7 +194,7 @@ function wgetInstall {
 
 }
 
-$wgPATH
+$wingetPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget.exe -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
 if ($wingetPath) {
     Write-Output "winget is installed at $wingetPath"
 } else {
@@ -205,7 +204,7 @@ if ($wingetPath) {
 ######### Check Winget is up to date #########
 Write-Output "************* Checking Winget Version *************"
 
-$wgPATH
+$wingetPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget.exe -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
 if (Test-Path $wingetPath) {
     # Get installed winget version
     $wingetVersion = & "$wingetPath" --version
@@ -263,17 +262,17 @@ if (-Not (Test-Path $psexecPath)) {
 
 ######### Check PWSH Binary #########
 Write-Output "************* Update PS7 *************"
-$pwshPATH = Get-ChildItem -Path "C:\Program Files\" -Filter pwsh.exe -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
-Write-Output "pwsh.exe path: $pwshPATH"
 
-$wgPATH
+$wingetPath = Get-ChildItem -Path "C:\Program Files\" -Filter winget.exe -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
 Start-Process -FilePath $wingetPath -ArgumentList @(
     "install", "--id", "Microsoft.PowerShell", "--silent", 
     "--accept-package-agreements", "--accept-source-agreements", "-e"
 ) -Wait -NoNewWindow
 
-}
+$pwshPATH = Get-ChildItem -Path "C:\Program Files\" -Filter pwsh.exe -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 1 -ExpandProperty FullName
+Write-Output "pwsh.exe path: $pwshPATH"
 
+#}
 #1..2 | ForEach-Object { xBootstrap }
 #Clean old logs
 
