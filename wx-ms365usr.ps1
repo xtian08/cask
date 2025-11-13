@@ -1,5 +1,5 @@
 # Get RegionalAndLanguageSettingsAccount for current or last logged-in user
-Write-Host "Checking Regional and Language Settings Account..."
+Write-Output "Checking Regional and Language Settings Account..."
 
 function Get-RegionalAccount {
     # Try current user first
@@ -25,7 +25,7 @@ function Get-RegionalAccount {
 $result = Get-RegionalAccount
 
 if ($result) {
-    Write-Host "RegionalAndLanguageSettingsAccount found: $result"
+    Write-Output "RegionalAndLanguageSettingsAccount found: $result"
 } else {
-    Write-Host "No RegionalAndLanguageSettingsAccount found in registry."
+    Write-Output "No RegionalAndLanguageSettingsAccount found in registry."
 }
