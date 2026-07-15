@@ -20,8 +20,8 @@ function Get-TargetAdapter {
 Write-Host "==========================================" -ForegroundColor Green
 Write-Host "  SYSTEM PROVISIONING & CLEANUP SCRIPT   " -ForegroundColor Green
 Write-Host "==========================================" -ForegroundColor Green
-Write-Host "1) [S] Set Configuration (Apply settings)"
-Write-Host "2) [R] Remove Configuration (Clean up settings)"
+Write-Host "1) [S] Set Configuration (Apply settings + Enable Hyper-V)"
+Write-Host "2) [R] Remove Configuration (Clean up settings, keep Hyper-V)"
 Write-Host ""
 $Choice = Read-Host "Please select an option (S/R)"
 
@@ -91,11 +91,34 @@ if ($Choice -eq 'S' -or $Choice -eq 's') {
         Write-Warning "Could not find an adapter matching 'usb4' or 'thunderbolt'. IP configuration skipped."
     }
 
+    # 5. Enable Hyper-V Feature
+    Write-Host "Checking Hyper-V platform status..." -ForegroundColor Cyan
+    $HyperV = Get-WindowsOptionalFeature -Online -FeatureName "Microsoft-Hyper-V-All" -ErrorAction SilentlyContinue
+
+    if ($null -eq $HyperV) {
+        # Fallback for Windows Home/non-Enterprise setups where the parent package name might differ slightly
+        $HyperV = Get-WindowsOptionalFeature -Online | Where-Object { $_.FeatureName -like "*Hyper-V*" } | Select-Object -First 1
+    }
+
+    if ($HyperV -and $HyperV.State -eq "Enabled") {
+        Write-Host "Hyper-V is already enabled." -ForegroundColor Green
+    } else {
+        Write-Host "Hyper-V is currently disabled. Enabling Hyper-V (this may take a minute)..." -ForegroundColor Yellow
+        # Enable Hyper-V and suppress the automatic restart prompt within the shell execution
+        $Result = Enable-WindowsOptionalFeature -Online -FeatureName "Microsoft-Hyper-V" -All -NoRestart
+        
+        if ($Result.RestartNeeded) {
+            Write-Host "Hyper-V has been enabled, but a computer RESTART is required to complete installation." -ForegroundColor Red
+        } else {
+            Write-Host "Hyper-V enabled successfully!" -ForegroundColor Green
+        }
+    }
+
     Write-Host "`nConfiguration applied successfully!" -ForegroundColor Green
 
 
 # ==============================================================================
-# MODE: REMOVE CONFIGURATION
+# MODE: REMOVE CONFIGURATION (Hyper-V left completely untouched)
 # ==============================================================================
 } elseif ($Choice -eq 'R' -or $Choice -eq 'r') {
     Write-Host "`n--- REMOVING CONFIGURATIONS ---" -ForegroundColor Red
@@ -139,6 +162,9 @@ if ($Choice -eq 'S' -or $Choice -eq 's') {
     } else {
         Write-Warning "Could not find an adapter matching 'usb4' or 'thunderbolt' to reset."
     }
+
+    # Hyper-V is intentionally skipped here to leave it as is.
+    Write-Host "Leaving Hyper-V settings untouched as requested." -ForegroundColor Yellow
 
     Write-Host "`nCleanup completed successfully!" -ForegroundColor Green
 
