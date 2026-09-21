@@ -6,12 +6,13 @@ mkdir -p /tmp/zoom
 cd /tmp/zoom || exit 1
 
 # Get latest Zoom version
-cask_json="zoom.json"
+cask_json="zoom-for-it-admins.json"
 latest_json=$(curl -s "https://formulae.brew.sh/api/cask/$cask_json")
 latestver=$(echo "$latest_json" | grep -o '"version":"[^"]*"' | awk -F'"' '{print $4}')
 echo "Latest Version is: $latestver"
 
-if pgrep -x "zoom.us" > /dev/null; then
+# Check if Zoom is running
+if pgrep -xq "zoom.us"; then
     echo "Zoom is currently running. Exiting."
     exit 0
 fi
@@ -30,6 +31,7 @@ if [ -d "/Applications/zoom.us.app" ]; then
 else
     echo "Zoom not found. Proceeding with fresh install..."
 fi
+
 
 # Write Zoom configuration plist
 cat <<EOF > /tmp/zoom/us.zoom.config.plist
@@ -62,7 +64,8 @@ EOF
 
 # Download and install Zoom
 echo "Downloading Zoom version ${latestver}..."
-curl -L -o zoom.pkg "https://cdn.zoom.us/prod/${latestver}/ZoomInstallerIT.pkg"
+#curl -L -o zoom.pkg "https://cdn.zoom.us/prod/${latestver}/ZoomInstallerIT.pkg"
+curl -L -o zoom.pkg "https://zoom.us/client/latest/ZoomInstallerIT.pkg"
 echo "Installing Zoom..."
 sudo installer -allowUntrusted -pkg /tmp/zoom/zoom.pkg -target /
 
